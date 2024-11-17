@@ -81,7 +81,7 @@ app.get('/fetchDealer/:id', async (req, res) => {
   try {
     const dealer = await Dealerships.findOne({ id: parseInt(req.params.id) });  // Find dealership by ID (ensure it's an integer)
     if (dealer) {
-      res.json(dealer);  // Send the dealership record as JSON if found
+      res.json([dealer]);  // Send the dealership record as JSON if found
     } else {
       res.status(404).json({ error: 'Dealership not found' });  // If not found, send a 404 response
     }
