@@ -14,44 +14,43 @@ logger = logging.getLogger(__name__)
 
 @csrf_exempt
 def login_user(request):
-    """
-    Handles user login.
-    """
+    """Handles user login."""
     data = json.loads(request.body)
     username = data['userName']
     password = data['password']
     user = authenticate(username=username, password=password)
     if user is not None:
         login(request, user)
-        response_data = {"userName": username, "status": "Authenticated"}
+        data = {"userName": username, "status": "Authenticated"}
     else:
-        response_data = {"userName": username}
-    return JsonResponse(response_data)
+        data = {"userName": username}
+    return JsonResponse(data)
 
 
 def logout_request(request):
-    """
-    Handles user logout.
-    """
+    """Handles user logout."""
     logout(request)
     return JsonResponse({"userName": ""})
 
 
 @csrf_exempt
 def register(request):
-    """
-    Handles user registration.
-    """
+    """Handles user registration."""
     data = json.loads(request.body)
     username = data['userName']
     password = data['password']
     first_name = data['firstName']
     last_name = data['lastName']
     email = data['email']
-    
-    username_exists = User.objects.filter(username=username).exists()
 
-    if not username_exists:
+    username_exist = False
+    try:
+        User.objects.get(username=username)
+        username_exist = True
+    except User.DoesNotExist:
+        logger.debug(f"{username} is new user")
+
+    if not username_exist:
         user = User.objects.create_user(
             username=username,
             first_name=first_name,
@@ -66,12 +65,10 @@ def register(request):
 
 
 def get_cars(request):
-    """
-    Returns a list of car models and makes.
-    """
+    """Returns a list of car models and makes."""
     if CarMake.objects.count() == 0:
         initiate()
-    
+
     car_models = CarModel.objects.select_related('car_make')
     cars = [
         {"CarModel": car_model.name, "CarMake": car_model.car_make.name}
@@ -81,18 +78,16 @@ def get_cars(request):
 
 
 def get_dealerships(request, state="All"):
-    """
-    Fetches and returns the list of dealerships.
-    """
-    endpoint = "/fetchDealers" if state == "All" else f"/fetchDealers/{state}"
+    """Fetches and returns the list of dealerships."""
+    endpoint = (
+        "/fetchDealers" if state == "All" else f"/fetchDealers/{state}"
+    )
     dealerships = get_request(endpoint)
     return JsonResponse({"status": 200, "dealers": dealerships})
 
 
 def get_dealer_reviews(request, dealer_id):
-    """
-    Fetches and returns the reviews of a particular dealer.
-    """
+    """Fetches and returns the reviews of a particular dealer."""
     if dealer_id:
         endpoint = f"/fetchReviews/dealer/{dealer_id}"
         reviews = get_request(endpoint)
@@ -104,9 +99,7 @@ def get_dealer_reviews(request, dealer_id):
 
 
 def get_dealer_details(request, dealer_id):
-    """
-    Fetches and returns the details of a particular dealer.
-    """
+    """Fetches and returns the details of a particular dealer."""
     if dealer_id:
         endpoint = f"/fetchDealer/{dealer_id}"
         dealership = get_request(endpoint)
@@ -115,9 +108,7 @@ def get_dealer_details(request, dealer_id):
 
 
 def add_review(request):
-    """
-    Handles adding a review for a dealer.
-    """
+    """Handles adding a review for a dealer."""
     if not request.user.is_anonymous:
         data = json.loads(request.body)
         try:
