@@ -24,7 +24,7 @@ def get_request(endpoint, **kwargs):
 
 
 def analyze_review_sentiments(text):
-    request_url = f"{sent_url}analyze/{text}"
+    request_url = f"{sen_url}analyze/{text}"
     try:
         response = requests.get(request_url)
         return response.json()
