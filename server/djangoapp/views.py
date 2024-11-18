@@ -59,8 +59,7 @@ def register(request):
         return JsonResponse({"userName": username, "status": "Authenticated"})
     else:
         return JsonResponse({"userName": username,
-                             "error": "Already Registered"
-                            })
+                             "error": "Already Registered"})
 
 
 def get_cars(request):
@@ -106,8 +105,8 @@ def get_dealer_details(request, dealer_id):
     if dealer_id:
         endpoint = f"/fetchDealer/{dealer_id}"
         dealership = get_request(endpoint)
-        return JsonResponse({"status": 200,"dealer": dealership})
-    return JsonResponse({"status": 400,"message": "Bad Request"})
+        return JsonResponse({"status": 200, "dealer": dealership})
+    return JsonResponse({"status": 400, "message": "Bad Request"})
 
 
 def add_review(request):
