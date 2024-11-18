@@ -1,16 +1,12 @@
 import json
 import logging
-from datetime import datetime
 from django.http import JsonResponse
-from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.models import User
-from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from .models import CarMake, CarModel
 from .populate import initiate
 from .restapis import get_request, analyze_review_sentiments, post_review
-
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
@@ -18,29 +14,34 @@ logger = logging.getLogger(__name__)
 
 @csrf_exempt
 def login_user(request):
-    """Handles user login."""
+    """
+    Handles user login.
+    """
     data = json.loads(request.body)
     username = data['userName']
     password = data['password']
     user = authenticate(username=username, password=password)
     if user is not None:
         login(request, user)
-        data = {"userName": username, "status": "Authenticated"}
+        response_data = {"userName": username, "status": "Authenticated"}
     else:
-        data = {"userName": username}
-    return JsonResponse(data)
+        response_data = {"userName": username}
+    return JsonResponse(response_data)
 
 
 def logout_request(request):
-    """Handles user logout."""
+    """
+    Handles user logout.
+    """
     logout(request)
     return JsonResponse({"userName": ""})
 
 
 @csrf_exempt
 def register(request):
-    """Handles user registration."""
-    context = {}
+    """
+    Handles user registration.
+    """
     data = json.loads(request.body)
     username = data['userName']
     password = data['password']
@@ -48,17 +49,15 @@ def register(request):
     last_name = data['lastName']
     email = data['email']
     
-    username_exist = False
-    try:
-        User.objects.get(username=username)
-        username_exist = True
-    except User.DoesNotExist:
-        logger.debug(f"{username} is new user")
+    username_exists = User.objects.filter(username=username).exists()
 
-    if not username_exist:
+    if not username_exists:
         user = User.objects.create_user(
-            username=username, first_name=first_name, last_name=last_name,
-            password=password, email=email
+            username=username,
+            first_name=first_name,
+            last_name=last_name,
+            password=password,
+            email=email,
         )
         login(request, user)
         return JsonResponse({"userName": username, "status": "Authenticated"})
@@ -67,7 +66,9 @@ def register(request):
 
 
 def get_cars(request):
-    """Returns a list of car models and makes."""
+    """
+    Returns a list of car models and makes.
+    """
     if CarMake.objects.count() == 0:
         initiate()
     
@@ -80,14 +81,18 @@ def get_cars(request):
 
 
 def get_dealerships(request, state="All"):
-    """Fetches and returns the list of dealerships."""
+    """
+    Fetches and returns the list of dealerships.
+    """
     endpoint = "/fetchDealers" if state == "All" else f"/fetchDealers/{state}"
     dealerships = get_request(endpoint)
     return JsonResponse({"status": 200, "dealers": dealerships})
 
 
 def get_dealer_reviews(request, dealer_id):
-    """Fetches and returns the reviews of a particular dealer."""
+    """
+    Fetches and returns the reviews of a particular dealer.
+    """
     if dealer_id:
         endpoint = f"/fetchReviews/dealer/{dealer_id}"
         reviews = get_request(endpoint)
@@ -99,7 +104,9 @@ def get_dealer_reviews(request, dealer_id):
 
 
 def get_dealer_details(request, dealer_id):
-    """Fetches and returns the details of a particular dealer."""
+    """
+    Fetches and returns the details of a particular dealer.
+    """
     if dealer_id:
         endpoint = f"/fetchDealer/{dealer_id}"
         dealership = get_request(endpoint)
@@ -108,7 +115,9 @@ def get_dealer_details(request, dealer_id):
 
 
 def add_review(request):
-    """Handles adding a review for a dealer."""
+    """
+    Handles adding a review for a dealer.
+    """
     if not request.user.is_anonymous:
         data = json.loads(request.body)
         try:
